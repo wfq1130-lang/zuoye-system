@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block title %}发布作业{% endblock %}
+{% block content %}
+
+<div class="page-title">
+  <a href="/teacher/home" style="color:#999;">←</a>
+  发布新作业
+</div>
+
+<div class="card" style="max-width:600px">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+      <label>作业标题 *</label>
+      <input type="text" name="title" class="form-control" required placeholder="如: Python循环练习">
+    </div>
+    <div class="form-group">
+      <label>班级 *</label>
+      <select name="class_id" class="form-control" required>
+        {% for c in classes %}
+        <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>截止日期 *</label>
+      <input type="datetime-local" name="deadline" class="form-control" required>
+    </div>
+    <div class="form-group">
+      <label>作业说明</label>
+      <textarea name="description" class="form-control" placeholder="详细说明作业要求..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>作业文件 (可选，支持Word/PDF/文本等)</label>
+      <input type="file" name="assignment_file" class="form-control" style="padding:7px">
+      <div class="text-muted" style="margin-top:4px;font-size:.78rem">可上传Word文档、PDF、文本文件等供学生下载</div>
+    </div>
+    <div class="flex-row">
+      <button type="submit" class="btn btn-primary">发布</button>
+      <a href="/teacher/home" class="btn btn-outline">取消</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Set default deadline to 7 days from now at 23:59
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  d.setHours(23, 59);
+  document.querySelector('input[name="deadline"]').value =
+    d.toISOString().slice(0, 16);
+</script>
+{% endblock %}
