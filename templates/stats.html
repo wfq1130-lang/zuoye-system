@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block title %}成绩统计 - {{ assignment.title }}{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<div class="flex-between mb-12">
+  <div class="page-title">
+    <a href="/teacher/grade/{{ assignment.id }}" style="color:#999;">←</a>
+    成绩统计: {{ assignment.title }}
+  </div>
+  <a href="/teacher/export/{{ assignment.id }}" class="btn btn-success btn-sm">导出Excel</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="value">{{ stats.submitted }}/{{ stats.total }}</div>
+    <div class="label">提交人数</div>
+  </div>
+  <div class="stat-card">
+    <div class="value">{{ stats.avg }}</div>
+    <div class="label">平均分</div>
+  </div>
+  <div class="stat-card">
+    <div class="value" style="color:#52c41a">{{ stats.max_grade }}</div>
+    <div class="label">最高分</div>
+  </div>
+  <div class="stat-card">
+    <div class="value" style="color:#ff4d4f">{{ stats.min_grade }}</div>
+    <div class="label">最低分</div>
+  </div>
+  <div class="stat-card">
+    <div class="value" style="color:{{ 'green' if stats.pass_rate >=60 else 'red' }}">{{ stats.pass_rate }}%</div>
+    <div class="label">及格率</div>
+  </div>
+</div>
+
+<div class="flex-row" style="gap:20px">
+  <div class="card" style="flex:1">
+    <h4 style="margin-bottom:16px">分数段分布</h4>
+    <canvas id="chart" style="max-height:250px"></canvas>
+  </div>
+  <div class="card" style="flex:1">
+    <h4 style="margin-bottom:16px">详情</h4>
+    <div class="bar-wrap"><div class="bar-label">90-100分</div><div class="bar"><div class="bar-fill" style="width:{{ (stats.excellent/stats.total*100)|round }}%;background:#52c41a"></div></div><span style="width:40px;text-align:right;font-size:.82rem">{{ stats.excellent }}</span></div>
+    <div class="bar-wrap"><div class="bar-label">80-89分</div><div class="bar"><div class="bar-fill" style="width:{{ (stats.good/stats.total*100)|round }}%;background:#1677ff"></div></div><span style="width:40px;text-align:right;font-size:.82rem">{{ stats.good }}</span></div>
+    <div class="bar-wrap"><div class="bar-label">60-79分</div><div class="bar"><div class="bar-fill" style="width:{{ (stats.fair/stats.total*100)|round }}%;background:#fa8c16"></div></div><span style="width:40px;text-align:right;font-size:.82rem">{{ stats.fair }}</span></div>
+    <div class="bar-wrap"><div class="bar-label">不及格</div><div class="bar"><div class="bar-fill" style="width:{{ (stats.fail/stats.total*100)|round }}%;background:#ff4d4f"></div></div><span style="width:40px;text-align:right;font-size:.82rem">{{ stats.fail }}</span></div>
+    <div class="bar-wrap" style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0"><div class="bar-label">未提交</div><div class="bar"><div class="bar-fill" style="width:{{ (stats.not_submitted/stats.total*100)|round }}%;background:#d9d9d9"></div></div><span style="width:40px;text-align:right;font-size:.82rem">{{ stats.not_submitted }}</span></div>
+  </div>
+</div>
+
+<div class="card" style="padding:0;overflow-x:auto;margin-top:16px">
+  <table>
+    <thead>
+      <tr><th>姓名</th><th>提交时间</th><th>分数</th><th>评语</th><th>状态</th></tr>
+    </thead>
+    <tbody>
+      {% for s in subs %}
+      <tr>
+        <td>{{ s.realname }}</td>
+        <td style="font-size:.82rem">{{ s.submitted_at }}</td>
+        <td style="font-weight:600;{{ 'color:#1677ff' if s.grade is not none }}">{{ s.grade if s.grade is not none else '-' }}</td>
+        <td style="font-size:.82rem;color:#888">{{ s.feedback or '-' }}</td>
+        <td>{{ '<span class="badge badge-success">已批改</span>'|safe if s.grade is not none else '<span class="badge badge-warning">待批改</span>'|safe }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+const ctx = document.getElementById('chart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['90-100', '80-89', '70-79', '60-69', '不及格'],
+    datasets: [{
+      data: {{ stats.distribution }},
+      backgroundColor: ['#52c41a','#1677ff','#fa8c16','#faad14','#ff4d4f'],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+  }
+});
+</script>
+{% endblock %}
