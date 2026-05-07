@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block title %}班级管理{% endblock %}
+{% block content %}
+
+<div class="flex-between mb-12">
+  <div class="page-title">
+    <a href="/teacher/home" style="color:#999;">←</a>
+    班级管理
+  </div>
+</div>
+
+<!-- Create new class -->
+<div class="card">
+  <h4 style="margin-bottom:12px">新建班级</h4>
+  <form method="POST" action="/teacher/classes/create" class="flex-row" style="align-items:flex-end">
+    <div class="form-group" style="margin-bottom:0;flex:1">
+      <label>班级名称</label>
+      <input type="text" name="name" class="form-control" placeholder="如: 软件技术2301班" required>
+    </div>
+    <button type="submit" class="btn btn-primary">创建班级</button>
+  </form>
+</div>
+
+<!-- Class list -->
+<div class="card" style="padding:0;overflow-x:auto">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>班级名称</th>
+        <th>班主任</th>
+        <th>学生人数</th>
+        <th>创建时间</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in classes %}
+      <tr>
+        <td>{{ c.id }}</td>
+        <td><strong>{{ c.name }}</strong></td>
+        <td>{{ c.homeroom_name or '未指定' }}</td>
+        <td>{{ c.student_count }} 人</td>
+        <td style="font-size:.82rem;color:#999">{{ c.created_at }}</td>
+        <td>
+          {% if c.student_count == 0 %}
+          <form method="POST" action="/teacher/classes/delete/{{ c.id }}" style="display:inline" onsubmit="return confirm('确定删除 {{ c.name }} 吗？')">
+            <button type="submit" class="btn btn-danger btn-sm">删除</button>
+          </form>
+          {% else %}
+          <span class="text-muted" style="font-size:.78rem">有学生，无法删除</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
