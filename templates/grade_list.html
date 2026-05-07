@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+{% block title %}批改 - {{ assignment.title }}{% endblock %}
+{% block content %}
+
+<div class="flex-between mb-12">
+  <div class="page-title">
+    <a href="/teacher/home" style="color:#999;">←</a>
+    {{ assignment.title }}
+    <span class="badge badge-info" style="font-size:.75rem">{{ assignment.class_name }}</span>
+  </div>
+  <div class="flex-row">
+    <a href="/teacher/stats/{{ assignment.id }}" class="btn btn-outline btn-sm">统计</a>
+    <a href="/teacher/export/{{ assignment.id }}" class="btn btn-outline btn-sm">导出Excel</a>
+  </div>
+</div>
+
+{% if assignment.file_path %}
+<div style="margin-bottom:12px">
+  <a href="/download/{{ assignment.file_path }}" class="btn btn-outline btn-sm">📎 下载作业文件</a>
+</div>
+{% endif %}
+
+<div class="flex-row mb-12" style="font-size:.85rem;color:#666">
+  <span>已交: <strong style="color:#52c41a">{{ results|selectattr('submitted','eq',True)|list|length }}</strong></span>
+  <span>未交: <strong style="color:#ff4d4f">{{ results|selectattr('submitted','eq',False)|list|length }}</strong></span>
+  <span>总人数: {{ results|length }}</span>
+  <span style="margin-left:auto">截止: {{ assignment.deadline }}</span>
+</div>
+
+<div class="card" style="padding:0;overflow-x:auto">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>姓名</th>
+        <th>状态</th>
+        <th>提交时间</th>
+        <th>内容预览</th>
+        <th>分数</th>
+        <th>评语</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in results %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ r.student.realname }}</td>
+        <td>
+          {% if r.submitted %}
+            {% if r.submission.grade is not none %}
+            <span class="badge badge-success">已批改</span>
+            {% else %}
+            <span class="badge badge-warning">待批改</span>
+            {% endif %}
+          {% else %}
+            <span class="badge badge-error">未交</span>
+          {% endif %}
+        </td>
+        <td style="font-size:.8rem">{{ r.submission.submitted_at if r.submitted else '-' }}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem;color:#888">
+          {{ r.submission.content[:40] if r.submitted and r.submission.content else '-' }}
+        </td>
+        <td style="font-weight:600;{{ 'color:#1677ff' if r.submission and r.submission.grade is not none else 'color:#ccc' }}">
+          {{ r.submission.grade if r.submitted and r.submission.grade is not none else '-' }}
+        </td>
+        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem;color:#888">
+          {{ r.submission.feedback[:20] if r.submitted and r.submission.feedback else '-' }}
+        </td>
+        <td>
+          {% if r.submitted %}
+          <button class="btn btn-primary btn-sm" onclick="openGrade({{ r.submission.id }}, '{{ r.student.realname }}', {{ r.submission.grade or 0 }}, '{{ r.submission.feedback or '' }}', `{{ r.submission.content|replace('\n','\\n')|replace('`','\\`') }}`, '{{ r.submission.file_path or '' }}')">批改</button>
+          {% else %}
+          <span style="color:#ccc;font-size:.78rem">-</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Grade Modal -->
+<div class="modal-overlay" id="grade-modal">
+  <div class="modal">
+    <h3>📝 批改 <span id="modal-student"></span></h3>
+
+    <div id="modal-content" class="text-muted" style="background:#fafafa;padding:12px;border-radius:6px;max-height:150px;overflow-y:auto;margin-bottom:16px;font-size:.85rem;white-space:pre-wrap"></div>
+    <div id="modal-file" style="margin-bottom:12px;display:none">
+      <a href="#" id="modal-file-link" class="btn btn-outline btn-sm">📎 下载附件</a>
+    </div>
+
+    <div class="form-group">
+      <label>分数 (0-100)</label>
+      <input type="number" id="modal-grade" class="form-control" min="0" max="100" style="width:120px">
+    </div>
+    <div class="form-group">
+      <label>评语</label>
+      <textarea id="modal-feedback" class="form-control" rows="3" placeholder="写评语给学生..."></textarea>
+    </div>
+    <div class="flex-row">
+      <button class="btn btn-primary" onclick="saveGrade()">保存评分</button>
+      <button class="btn btn-outline" onclick="closeGrade()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentSubmissionId = null;
+
+function openGrade(id, name, grade, feedback, content, filePath) {
+  currentSubmissionId = id;
+  document.getElementById('modal-student').textContent = name;
+  document.getElementById('modal-content').textContent = content || '(学生未填写文字说明)';
+  document.getElementById('modal-grade').value = grade || '';
+  document.getElementById('modal-feedback').value = feedback || '';
+
+  if (filePath) {
+    document.getElementById('modal-file').style.display = 'block';
+    document.getElementById('modal-file-link').href = '/download/' + filePath;
+  } else {
+    document.getElementById('modal-file').style.display = 'none';
+  }
+
+  document.getElementById('grade-modal').classList.add('active');
+}
+
+function closeGrade() {
+  document.getElementById('grade-modal').classList.remove('active');
+}
+
+async function saveGrade() {
+  const grade = document.getElementById('modal-grade').value;
+  const feedback = document.getElementById('modal-feedback').value;
+
+  const formData = new FormData();
+  formData.append('grade', grade);
+  formData.append('feedback', feedback);
+
+  const resp = await fetch('/teacher/grade/' + currentSubmissionId + '/save', {
+    method: 'POST',
+    body: formData
+  });
+  const data = await resp.json();
+  if (data.ok) {
+    location.reload();
+  }
+}
+</script>
+{% endblock %}
