@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+{% block title %}学生首页{% endblock %}
+{% block content %}
+
+{% if show_submit %}
+<!-- Submit Assignment Page -->
+<div class="page-title">
+  <a href="/student/home" style="color:#999;">←</a>
+  提交作业: {{ assignment.title }}
+</div>
+
+<div class="card" style="max-width:650px">
+  <div class="text-muted mb-12" style="font-size:.85rem">
+    老师: {{ assignment.teacher_name }} &nbsp;|&nbsp; 截止: <strong>{{ assignment.deadline }}</strong>
+  </div>
+  {% if assignment.description %}
+  <div style="background:#fffbe6;padding:10px 14px;border-radius:6px;margin-bottom:14px;font-size:.85rem">
+    <strong>要求:</strong> {{ assignment.description }}
+  </div>
+  {% endif %}
+  {% if assignment.file_path %}
+  <div style="margin-bottom:14px">
+    <a href="/download/{{ assignment.file_path }}" class="btn btn-outline btn-sm">📎 下载作业文件</a>
+  </div>
+  {% endif %}
+
+  <form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+      <label>文字说明</label>
+      <textarea name="content" class="form-control" rows="6" placeholder="可以在这里写你的解题思路、遇到的问题...">{{ existing.content if existing else '' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label>上传文件 (可选，支持代码/截图/文档)</label>
+      <input type="file" name="file" class="form-control" style="padding:7px">
+      {% if existing and existing.file_path %}
+      <div style="margin-top:6px;font-size:.82rem">
+        已上传: <a href="/download/{{ existing.file_path }}">{{ existing.file_path.split('_',2)[-1] }}</a>
+      </div>
+      {% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">提交作业</button>
+    <a href="/student/home" class="btn btn-outline">取消</a>
+  </form>
+</div>
+
+{% else %}
+<!-- Student Home: Assignment List -->
+<div class="flex-between mb-12">
+  <div class="page-title">我的作业</div>
+  <div class="flex-row">
+    <span class="badge badge-info">{{ user.class_name if user.class_name else '未加入班级' }}</span>
+    <button class="btn btn-outline btn-sm" onclick="openChangeClass()">切换班级</button>
+  </div>
+</div>
+
+{% if assignments %}
+  {% for a in assignments %}
+  <div class="card">
+    <div class="flex-between">
+      <div>
+        <strong style="font-size:1.05rem;">{{ a.title }}</strong>
+        <span class="text-muted" style="margin-left:8px;font-size:.82rem">{{ a.teacher_name }}老师</span>
+      </div>
+      <div class="flex-row">
+        {% if a.submitted %}
+          {% if a.grade is not none %}
+          <span class="badge badge-success">已批改: {{ a.grade }}分</span>
+          {% else %}
+          <span class="badge badge-warning">已提交，待批改</span>
+          {% endif %}
+          <a href="/student/submit/{{ a.id }}" class="btn btn-outline btn-sm">修改提交</a>
+        {% else %}
+          <a href="/student/submit/{{ a.id }}" class="btn btn-primary btn-sm">去提交</a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="text-muted" style="margin-top:8px;font-size:.85rem">
+      截止: {{ a.deadline }}
+      {% if a.deadline < now and not a.submitted %}
+      <span class="badge badge-error">已过期</span>
+      {% endif %}
+    </div>
+    {% if a.file_path %}
+    <div style="margin-top:8px">
+      <a href="/download/{{ a.file_path }}" class="btn btn-outline btn-sm">📎 下载作业文件</a>
+    </div>
+    {% endif %}
+    {% if a.feedback %}
+    <div style="margin-top:8px;padding:8px 12px;background:#f6ffed;border-radius:4px;font-size:.85rem">
+      <strong>老师评语:</strong> {{ a.feedback }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card empty">
+    <div class="icon">📝</div>
+    <div>暂时没有作业</div>
+  </div>
+{% endif %}
+
+{% endif %}
+
+<!-- Change Class Modal -->
+<div class="modal-overlay" id="class-modal">
+  <div class="modal">
+    <h3>选择班级</h3>
+    <form method="POST" action="/student/change-class">
+      <div class="form-group">
+        <label>当前班级: <strong>{{ user.class_name or '无' }}</strong></label>
+      </div>
+      <div class="form-group">
+        <label>切换到</label>
+        <select name="class_id" class="form-control" required>
+          <option value="">-- 请选择 --</option>
+          {% for c in all_classes %}
+          <option value="{{ c.id }}" {% if user.class_id == c.id %}selected{% endif %}>
+            {{ c.name }} (班主任: {{ c.homeroom_name or '未指定' }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex-row">
+        <button type="submit" class="btn btn-primary">确认切换</button>
+        <button type="button" class="btn btn-outline" onclick="closeChangeClass()">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openChangeClass() {
+  document.getElementById('class-modal').classList.add('active');
+}
+function closeChangeClass() {
+  document.getElementById('class-modal').classList.remove('active');
+}
+</script>
+{% endblock %}
