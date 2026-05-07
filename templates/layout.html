@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}作业提交批改系统{% endblock %}</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333;min-height:100vh}
+  a{color:#1677ff;text-decoration:none}
+  a:hover{color:#4096ff}
+
+  .header{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+  .header .logo{font-size:1.1rem;font-weight:700;color:#1677ff}
+  .header .user{color:#666;font-size:.88rem}
+  .header .user a{margin-left:12px;color:#999}
+  .header .role-tag{font-size:.7rem;padding:2px 8px;border-radius:10px;margin-left:8px}
+  .role-tag.teacher{background:#e6f4ff;color:#1677ff}
+  .role-tag.student{background:#f6ffed;color:#52c41a}
+
+  .container{max-width:1100px;margin:0 auto;padding:20px 24px}
+  .page-title{font-size:1.3rem;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+
+  .card{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:20px;margin-bottom:16px}
+
+  .btn{padding:8px 20px;border-radius:6px;border:none;cursor:pointer;font-size:.88rem;font-weight:500;transition:all .15s;display:inline-block;text-align:center}
+  .btn-primary{background:#1677ff;color:#fff}
+  .btn-primary:hover{background:#4096ff}
+  .btn-success{background:#52c41a;color:#fff}
+  .btn-success:hover{background:#73d13d}
+  .btn-warning{background:#fa8c16;color:#fff}
+  .btn-outline{background:#fff;border:1px solid #d9d9d9;color:#333}
+  .btn-outline:hover{border-color:#1677ff;color:#1677ff}
+  .btn-sm{padding:4px 12px;font-size:.78rem}
+  .btn-danger{background:#ff4d4f;color:#fff}
+
+  .form-group{margin-bottom:16px}
+  .form-group label{display:block;margin-bottom:6px;font-weight:500;font-size:.88rem;color:#555}
+  .form-control{width:100%;padding:9px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:.9rem;transition:border-color .2s}
+  .form-control:focus{outline:none;border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+  textarea.form-control{resize:vertical;min-height:100px;font-family:inherit}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px 14px;text-align:left;border-bottom:1px solid #f0f0f0;font-size:.88rem}
+  th{background:#fafafa;font-weight:600;color:#555}
+  tr:hover td{background:#fafafa}
+
+  .badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.75rem;font-weight:500}
+  .badge-success{background:#f6ffed;color:#52c41a}
+  .badge-warning{background:#fff7e6;color:#fa8c16}
+  .badge-error{background:#fff2f0;color:#ff4d4f}
+  .badge-info{background:#e6f4ff;color:#1677ff}
+
+  .empty{text-align:center;padding:40px 20px;color:#999}
+  .empty .icon{font-size:3rem;margin-bottom:12px}
+
+  .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+  .modal-overlay.active{display:flex}
+  .modal{background:#fff;border-radius:10px;padding:24px;width:90%;max-width:560px;max-height:80vh;overflow-y:auto}
+  .modal h3{margin-bottom:16px;font-size:1.05rem}
+
+  .flex-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .flex-between{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .text-muted{color:#999}
+  .text-success{color:#52c41a}
+  .text-error{color:#ff4d4f}
+  .mt-12{margin-top:12px}
+  .mb-12{margin-bottom:12px}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+  .stat-card{background:#fff;border-radius:8px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .stat-card .value{font-size:1.6rem;font-weight:700;color:#1677ff}
+  .stat-card .label{font-size:.78rem;color:#999;margin-top:4px}
+
+  .bar-wrap{display:flex;align-items:center;gap:10px;margin:6px 0}
+  .bar-wrap .bar-label{width:80px;text-align:right;font-size:.82rem;color:#666}
+  .bar-wrap .bar{flex:1;height:22px;background:#f0f2f5;border-radius:4px;overflow:hidden}
+  .bar-wrap .bar-fill{height:100%;border-radius:4px;transition:width .5s}
+
+  .login-box{max-width:400px;margin:80px auto}
+  .login-box h1{text-align:center;margin-bottom:24px;color:#1677ff}
+  .login-box .error{background:#fff2f0;border:1px solid #ffccc7;color:#ff4d4f;padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:.85rem}
+
+  @media(max-width:768px){
+    .header{padding:0 12px}
+    .container{padding:12px}
+    table{font-size:.78rem}
+    th,td{padding:6px 8px}
+  }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <a href="/" class="logo">实训作业系统</a>
+  </div>
+  {% if session.user_id %}
+  <div class="user">
+    {{ session.realname }}
+    <span class="role-tag {{ session.role }}">{{ '老师' if session.role == 'teacher' else '学生' }}</span>
+    <a href="/logout">退出</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="container">
+{% block content %}{% endblock %}
+</div>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
