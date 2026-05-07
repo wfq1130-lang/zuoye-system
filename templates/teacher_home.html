@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block title %}老师首页{% endblock %}
+{% block content %}
+
+<div class="flex-between mb-12">
+  <div class="page-title">我发布的作业</div>
+  <div class="flex-row">
+    <a href="/teacher/classes" class="btn btn-outline">班级管理</a>
+    <a href="/teacher/assignment/create" class="btn btn-primary">+ 发布新作业</a>
+  </div>
+</div>
+
+{% if assignments %}
+  {% for a in assignments %}
+  <div class="card">
+    <div class="flex-between">
+      <div>
+        <strong style="font-size:1.05rem;">{{ a.title }}</strong>
+        <span class="badge badge-info" style="margin-left:8px">{{ a.class_name }}</span>
+      </div>
+      <div class="flex-row">
+        <a href="/teacher/grade/{{ a.id }}" class="btn btn-primary btn-sm">批改</a>
+        <a href="/teacher/stats/{{ a.id }}" class="btn btn-outline btn-sm">统计</a>
+        <a href="/teacher/export/{{ a.id }}" class="btn btn-outline btn-sm">导出</a>
+      </div>
+    </div>
+    <div class="text-muted" style="margin-top:8px;font-size:.85rem">
+      提交: {{ a.submitted_count }}/{{ a.total_students }} 人 &nbsp;|&nbsp;
+      截止: {{ a.deadline }}
+      {% if a.deadline < now %}
+      <span class="badge badge-error">已截止</span>
+      {% endif %}
+    </div>
+    {% if a.description %}
+    <div style="margin-top:8px;padding:8px 12px;background:#fafafa;border-radius:4px;font-size:.85rem;color:#666">{{ a.description[:150] }}{% if a.description|length > 150 %}...{% endif %}</div>
+    {% endif %}
+    {% if a.file_path %}
+    <div style="margin-top:6px">
+      <a href="/download/{{ a.file_path }}" class="btn btn-outline btn-sm">📎 下载作业文件</a>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card empty">
+    <div class="icon">📋</div>
+    <div>还没有发布作业</div>
+    <a href="/teacher/assignment/create" class="btn btn-primary mt-12">发布第一个作业</a>
+  </div>
+{% endif %}
+
+{% endblock %}
